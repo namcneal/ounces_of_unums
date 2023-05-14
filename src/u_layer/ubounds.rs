@@ -3,10 +3,12 @@ use crate::u_layer::backend_reprs::*;
 use crate::u_layer::unums::*;
 
 
-pub (crate) struct UBound<const L1: usize, const L2: usize>
+pub (crate) struct UBound<MT1,MT2>
+where MT1: MantissaBackend,
+      MT2: MantissaBackend
 {
-    pub (crate) left  : Unum<L1>,
-    pub (crate) right : Unum<L2>
+    pub (crate) left  : Unum<MT1>,
+    pub (crate) right : Unum<MT2>
 
 }
 
