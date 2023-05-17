@@ -3,7 +3,7 @@ use crate::u_layer::backend_reprs::*;
 use crate::u_layer::unums::*;
 
 
-pub (crate) struct UBound<MT1,MT2>
+pub (crate) struct Ubound<MT1,MT2>
 where MT1: MantissaBackend,
       MT2: MantissaBackend
 {

@@ -1,46 +1,55 @@
 use crate::u_layer::backend_reprs::*;
 use crate::u_layer::unums::*;
+use crate::u_layer::ubounds::*;
+use crate::g_layer::gbounds::*;
+
 use std::mem::MaybeUninit;
 use bitvec::{bitarr, prelude::BitArray};
 use gmp_mpfr_sys::{mpfr, mpc::RNDAN};
 
-use super::backend_reprs::{MPFR_BITS_PER_LIMB_as_PREC_T, MantissaBackend, MPFRLimbBackend};
+use crate::u_layer::backend_reprs::{MPFR_BITS_PER_LIMB_as_PREC_T, MantissaBackend, MPFRLimbBackend};
+
+struct UnumToConvert<MT: MantissaBackend>(Unum<MT>, mpfr::rnd_t);
 
 type MPFRFloatPtr = MaybeUninit<gmp_mpfr_sys::mpfr::mpfr_t>;
 
-impl<MT: MantissaBackend> Into<MPFRFloatPtr> for Unum<MT>{
+impl<MT> Into<MPFRFloatPtr> for UnumToConvert<MT>
+where MT: MantissaBackend
+{
     fn into(self) -> MaybeUninit<gmp_mpfr_sys::mpfr::mpfr_t> {
+        let unum = self.0;
+        let rounding_choice  = self.1;
         let mut mpfr_float = MaybeUninit::uninit();
 
         unsafe{
-            mpfr::init2(mpfr_float.as_mut_ptr(), self.mpfr_precision());
+            mpfr::init2(mpfr_float.as_mut_ptr(), unum.mpfr_precision());
 
-            match self.extra{
+            match unum.extra{
                 // NaN
                 UNUM_NAN_MASK => (),
 
                 // Inf 
-                UNUM_INF_MASK => mpfr::set_inf(mpfr_float.as_mut_ptr(), self.mpfr_sign()),
+                UNUM_INF_MASK => mpfr::set_inf(mpfr_float.as_mut_ptr(), unum.mpfr_sign()),
 
                 // Zero
-                _ => match self.is_zero(){
-                    true => mpfr::set_zero(mpfr_float.as_mut_ptr(), self.mpfr_sign()),
+                _ => match unum.is_zero(){
+                    true => mpfr::set_zero(mpfr_float.as_mut_ptr(), unum.mpfr_sign()),
 
                 // Everything else
                     _    => {
-                        mpfr::set_ui(mpfr_float.as_mut_ptr(), 1, mpfr::rnd_t::RNDN);
+                        mpfr::set_ui(mpfr_float.as_mut_ptr(), 1, rounding_choice);
 
                         let old_exponent = mpfr::get_exp(mpfr_float.as_mut_ptr());
-                        let new_exponent = old_exponent + self.mpfr_exponent();
+                        let new_exponent = old_exponent + unum.mpfr_exponent();
                         mpfr::set_exp(mpfr_float.as_mut_ptr(), new_exponent);
                         
                         let mut mantissa_c_array = mpfr_float.assume_init().d.as_ptr();
                         
-                        match self.size(){
+                        match unum.size(){
                             UnumSize::Null   => panic!("An unum with no mantissa should not have gotten this far"),
                             UnumSize::Gallon => {
-                                let first_slice  = (self.mantissa.unwrap() >> 64).try_into();
-                                let second_slice = (self.mantissa.unwrap() >> 0).try_into();
+                                let first_slice  = (unum.mantissa.unwrap() >> 64).try_into();
+                                let second_slice = (unum.mantissa.unwrap() >> 0).try_into();
                                 match (first_slice, second_slice){
                                     (Ok(first), Ok(second)) => {
                                         *mantissa_c_array.as_mut().unwrap() = first;
@@ -54,7 +63,7 @@ impl<MT: MantissaBackend> Into<MPFRFloatPtr> for Unum<MT>{
                             },
                                 
                             _ => {
-                                let mantissa = self.mantissa.unwrap().try_into();
+                                let mantissa = unum.mantissa.unwrap().try_into();
                                 match mantissa{
                                     Ok(mantissa) => {
                                         *mantissa_c_array.as_mut().unwrap() = mantissa;

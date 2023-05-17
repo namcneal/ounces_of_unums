@@ -15,8 +15,8 @@ fn main() {
         let overunderflow = mpfr::set_ui(x.as_mut_ptr(), 5, mpfr::rnd_t::RNDN);
 
 
-        let unum : Quart = x.into();
-        println!("{:?}", unum);
+        // let unum : Quart = x.into();
+        // println!("{:?}", unum);
     
         // // let old_exponent = mpfr::get_exp(x.as_mut_ptr());
         // // let new_exponent : i64 = -2;
