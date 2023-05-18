@@ -1,22 +1,14 @@
+use crate::mpfr_glue::prelude::*;
 use duplicate;
 use num_traits::Zero;
-
-pub (crate) type MPFRBitOrder         = bitvec::prelude::Msb0;
-pub (crate) type MPFRPrecisionBackend = gmp_mpfr_sys::mpfr::prec_t;
-pub (crate) type MPFRExponentBackend  = core::ffi::c_long;
-pub (crate) type MPFRLimbBackend      = gmp_mpfr_sys::gmp::limb_t;
-
-// conversion to the precision type to save us from doing this later
-// when the two need to be divided to compute the number of limbs
-pub (crate) const MPFR_BITS_PER_LIMB           : usize                = 8 * std::mem::size_of::<MPFRLimbBackend>();
-pub (crate) const MPFR_BITS_PER_LIMB_as_PREC_T : MPFRPrecisionBackend = MPFR_BITS_PER_LIMB as MPFRPrecisionBackend;
-
 
 pub trait MantissaBackend : std::ops::Shr<usize> + 
                             num_traits::PrimInt  + 
                             TryInto<u64>         +
                             std::fmt::Debug
-{}
+{
+    fn precision() -> usize;
+}
 
 #[duplicate::duplicate_item(
     int_type;
@@ -26,8 +18,11 @@ pub trait MantissaBackend : std::ops::Shr<usize> +
     [ u64 ];
     [ u128];
 )]
-impl MantissaBackend for int_type{}
-
+impl MantissaBackend for int_type{
+    fn precision() -> usize{
+        8 * std::mem::size_of::<int_type>()
+    }
+}
 
 pub type DefaultExponentBackend = MPFRExponentBackend;
 

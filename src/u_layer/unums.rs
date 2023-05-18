@@ -62,6 +62,67 @@ impl<MT: MantissaBackend> Unum<MT>{
         }
     }
 
+    pub fn is_exact(&self) -> bool{
+        !self.is_inexact()
+    }
+ 
+    pub fn is_inexact(&self) -> bool{
+        (self.extra & UNUM_UBIT_MASK) > 0
+    }
+
+    pub fn  plus_one_ulp(&self) -> Unum<MT>{
+        let mut new_unum = self.clone();
+
+        // Should also have a mantissa that we can unwrap
+        new_unum.mantissa = Some(self.mantissa.unwrap() + MT::one());
+        new_unum
+    }
+
+    // Zero is represented by anything with a zero mantissa.
+    // No canonical choice, but I try to implement a zero exponent
+    pub fn zero() -> Unum<MT>{
+        Unum { 
+            mantissa: Some(MT::zero()), 
+            exponent: DefaultExponentBackend::zero(), 
+            extra: 0 
+        }
+    }
+
+    pub fn is_zero(&self) -> bool{
+        match self.mantissa{
+            Some(mantissa) => mantissa == MT::zero(),
+            _ => false
+        }
+    }
+
+    pub fn is_positive(&self) -> bool{
+        self.extra & UNUM_SIGN_MASK == 0
+    }
+
+    pub fn most_positive() -> Unum<MT>{
+        Unum { 
+            mantissa: Some(MT::max_value()), 
+            exponent: DefaultExponentBackend::MAX, 
+            extra: 0 }
+    }
+
+    pub fn is_most_positive_or_negative(&self) -> bool{
+        match self.mantissa{
+            Some(mantissa) => {
+                mantissa      == MT::max_value() && 
+                self.exponent == DefaultExponentBackend::MAX
+            },
+            _ => false
+        }
+    }
+
+    pub fn most_negative() -> Unum<MT>{
+        Unum { 
+            mantissa: Some(MT::max_value()), 
+            exponent: DefaultExponentBackend::MAX, 
+            extra: UNUM_SIGN_MASK }
+    }
+
     pub (crate) fn empty() -> Unum<MT>{
         Unum { mantissa: None,
                exponent: DefaultExponentBackend::MAX, 
@@ -72,6 +133,10 @@ impl<MT: MantissaBackend> Unum<MT>{
         let mut nan = Self::empty();
         nan.extra = UNUM_NAN_MASK;
         nan
+    }
+
+    pub fn is_nan(&self) -> bool{
+        self.extra & UNUM_NAN_MASK >0 
     }
 
     pub fn posinf() -> Unum<MT>{
@@ -87,11 +152,8 @@ impl<MT: MantissaBackend> Unum<MT>{
         inf
     }
 
-    pub (crate) fn is_zero(&self) -> bool{
-        match self.mantissa{
-            Some(mantissa) => (mantissa >> self.precision() - 1) & MT::one() > MT::zero(),
-            _ => false
-        }
+    pub fn is_inf(&self) -> bool{
+        self.extra & UNUM_INF_MASK > 0 
     }
 
     pub (crate) fn mpfr_precision(&self) -> gmp_mpfr_sys::mpfr::prec_t{

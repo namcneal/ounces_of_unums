@@ -1,3 +1,4 @@
+use crate::mpfr_glue::mpfr_types::*;
 use crate::u_layer::backend_reprs::*;
 use crate::u_layer::unums::*;
 use crate::u_layer::ubounds::*;
@@ -7,19 +8,26 @@ use std::mem::MaybeUninit;
 use bitvec::{bitarr, prelude::BitArray};
 use gmp_mpfr_sys::{mpfr, mpc::RNDAN};
 
-use crate::u_layer::backend_reprs::{MPFR_BITS_PER_LIMB_as_PREC_T, MantissaBackend, MPFRLimbBackend};
+type Inexact = bool;
+struct UnumConversionResult(MPFRFloatPtr, Inexact);
 
-struct UnumToConvert<MT: MantissaBackend>(Unum<MT>, mpfr::rnd_t);
-
-type MPFRFloatPtr = MaybeUninit<gmp_mpfr_sys::mpfr::mpfr_t>;
-
-impl<MT> Into<MPFRFloatPtr> for UnumToConvert<MT>
+impl<MT> Into<MPFRFloat> for Unum<MT>
 where MT: MantissaBackend
 {
-    fn into(self) -> MaybeUninit<gmp_mpfr_sys::mpfr::mpfr_t> {
-        let unum = self.0;
-        let rounding_choice  = self.1;
+    fn into(self) -> MPFRFloat {
+        unsafe{
+            <Unum<MT> as Into<MPFRFloatPtr>>::into(self).assume_init()
+        }
+    }
+}
+
+impl<MT> Into<MPFRFloatPtr> for Unum<MT>
+where MT: MantissaBackend
+{
+    fn into(self) -> MPFRFloatPtr{
+        let unum = self;
         let mut mpfr_float = MaybeUninit::uninit();
+        
 
         unsafe{
             mpfr::init2(mpfr_float.as_mut_ptr(), unum.mpfr_precision());
@@ -33,14 +41,17 @@ where MT: MantissaBackend
 
                 // Zero
                 _ => match unum.is_zero(){
-                    true => mpfr::set_zero(mpfr_float.as_mut_ptr(), unum.mpfr_sign()),
+                    true => mpfr::set_zero(mpfr_float.as_mut_ptr(), 0),
 
                 // Everything else
                     _    => {
-                        mpfr::set_ui(mpfr_float.as_mut_ptr(), 1, rounding_choice);
-
-                        let old_exponent = mpfr::get_exp(mpfr_float.as_mut_ptr());
-                        let new_exponent = old_exponent + unum.mpfr_exponent();
+                        // Set the number to 1.00000... x 2^0 first 
+                        let has_been_rounded = mpfr::set_ui(mpfr_float.as_mut_ptr(), 1, mpfr::rnd_t::RNDZ);
+                        assert!(has_been_rounded == 0); // One should always be exactly expressable
+                        
+                        let exponent_offset_from_zero = mpfr::get_exp(mpfr_float.as_mut_ptr());
+                        
+                        let new_exponent = unum.mpfr_exponent() - exponent_offset_from_zero;
                         mpfr::set_exp(mpfr_float.as_mut_ptr(), new_exponent);
                         
                         let mut mantissa_c_array = mpfr_float.assume_init().d.as_ptr();

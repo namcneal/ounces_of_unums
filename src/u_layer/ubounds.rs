@@ -2,7 +2,7 @@
 use crate::u_layer::backend_reprs::*;
 use crate::u_layer::unums::*;
 
-
+#[derive(Debug, Copy, Clone)]
 pub (crate) struct Ubound<MT1,MT2>
 where MT1: MantissaBackend,
       MT2: MantissaBackend
