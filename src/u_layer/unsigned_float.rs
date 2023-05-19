@@ -1,5 +1,6 @@
 use crate::u_layer::backend_reprs::*;
 use bitvec::prelude::*;
+use dashu::integer;
 use num_traits::{Zero, FromPrimitive};
 use gmp_mpfr_sys::mpfr;
 use std::error::Error;
@@ -132,10 +133,16 @@ impl<MT> std::fmt::Display for UnsignedFloat<MT>
 where MT: MantissaBackend,
 {       
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Convert the mantissa to a binary string representation
         let mut mantissa_str = format!("{:b}", self.mantissa);
 
         if self.exponent >= 0{
+            // Convert the mantissa to a binary string representation
+            let extra_zeros_for_shifting: String = vec![0; self.exponent as usize]
+                .into_iter()
+                .map(|i| i.to_string())
+                .collect();
+
+            mantissa_str.push_str(&extra_zeros_for_shifting);
             mantissa_str.insert(self.exponent as usize + 1, '.');
             match binary_to_decimal(&mantissa_str){
                 Ok(converted) => {
@@ -145,6 +152,8 @@ where MT: MantissaBackend,
             };
 
         } else{
+            let mantissa_str = format!("{:b}", self.mantissa);
+
             let zeros_after_decimal = (-self.exponent - 1) as usize;
             let padding : String = vec![0; zeros_after_decimal]
                 .into_iter()
