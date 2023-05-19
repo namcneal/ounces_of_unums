@@ -7,7 +7,7 @@ use u_layer::ubounds::*;
 use h_layer::from_f64::*;
 
 fn main() {
-    let x : UBound<u8,u32> = (100.5231231).into();
+    let x : UBound<u8,u32> = (505.521).into();
 
     println!("{}", x);
 }
