@@ -4,7 +4,7 @@ use crate::u_layer::utag::*;
 use crate::u_layer::unsigned_float::*;
 
 #[derive(Debug,Copy, Clone)]
-pub (crate) struct Ubound<MTL,MTR>
+pub (crate) struct UBound<MTL,MTR>
 where MTL: MantissaBackend,
       MTR: MantissaBackend
 {
@@ -19,7 +19,7 @@ pub (crate) enum Endpoint{
 }
 
 use Endpoint::*;
-impl<MTL,MTR> Ubound<MTL, MTR>
+impl<MTL,MTR> UBound<MTL, MTR>
 where MTL: MantissaBackend,
       MTR: MantissaBackend
 {
@@ -65,8 +65,8 @@ where MTL: MantissaBackend,
         }
     }
 
-    pub fn nan() -> Ubound<MTL,MTR>{
-        Ubound { 
+    pub fn nan() -> UBound<MTL,MTR>{
+        UBound { 
             left  : None, 
             right : None, 
             utag  : UTag(NAN_MASK)
@@ -123,7 +123,7 @@ where MTL: MantissaBackend,
     }
 }
 
-impl<MTL,MTR> std::fmt::Display for Ubound<MTL,MTR>
+impl<MTL,MTR> std::fmt::Display for UBound<MTL,MTR>
 where MTL: MantissaBackend,
       MTR: MantissaBackend
 {

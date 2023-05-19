@@ -29,14 +29,14 @@ use std::mem::MaybeUninit;
      [ u32 ]   [ u64 ];
      [ u64 ]   [ u64 ];
  )]
-impl From<f64> for Ubound<int_left, int_right>{
+impl From<f64> for UBound<int_left, int_right>{
     fn from(value: f64) -> Self {
         // Handle the NaN cases
         if value.is_nan(){
-            return Ubound::<int_left, int_right>::nan();
+            return UBound::<int_left, int_right>::nan();
 
         } else if value.is_infinite(){
-            let mut ubound = Ubound::<int_left, int_right>::nan();
+            let mut ubound = UBound::<int_left, int_right>::nan();
 
             if value > 0.0{
                 ubound.set_posinf(&Endpoint::Left);
@@ -66,13 +66,13 @@ impl From<f64> for Ubound<int_left, int_right>{
                     left_right_open |= RIGHT_OPEN_MASK;
                 }
 
-                let gbound = Gbound{
+                let gbound = GBound{
                     left  : left_mpfr,
                     right : right_mpfr,
                     open  : IntervalOpenness(left_right_open)
                 };
 
-                let ubound : Ubound<int_left, int_right> = (&gbound).into();
+                let ubound : UBound<int_left, int_right> = (&gbound).into();
                 // drop(gbound);
 
                 return ubound

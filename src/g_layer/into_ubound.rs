@@ -28,13 +28,13 @@ use gmp_mpfr_sys::mpfr;
      [ u32 ]   [ u64 ];
      [ u64 ]   [ u64 ];
  )]
- impl From<&Gbound> for Ubound<int_left, int_right>
+ impl From<&GBound> for UBound<int_left, int_right>
  {
-     fn from(gbound: &Gbound) -> Self {
+     fn from(gbound: &GBound) -> Self {
      unsafe{
          // Handle the NaN cases
          if mpfr::nan_p(gbound.left.as_ptr()) > 0 || mpfr::nan_p(gbound.right.as_ptr()) > 0{
-             return Ubound::<int_left, int_right>::nan();
+             return UBound::<int_left, int_right>::nan();
          }
  
          let mut utag : u8 = 0;
@@ -79,7 +79,7 @@ use gmp_mpfr_sys::mpfr;
              utag |= RIGHT_SIGN_MASK;
          }
  
-         Ubound { 
+         UBound { 
              left  : ubound_left, 
              right : ubound_right,
              utag  : UTag(utag)

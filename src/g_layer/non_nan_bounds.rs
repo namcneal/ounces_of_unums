@@ -10,7 +10,7 @@ pub (super) struct NonNaNBound{
     pub (super) open     : bool
 }
 
-pub (crate) struct UboundToConvert<'a, MTL:MantissaBackend, MTR:MantissaBackend>(pub (crate) (&'a Ubound<MTL,MTR>, Endpoint));
+pub (crate) struct UboundToConvert<'a, MTL:MantissaBackend, MTR:MantissaBackend>(pub (crate) (&'a UBound<MTL,MTR>, Endpoint));
 
 impl<'a, MTL, MTR> Into<NonNaNBound> for UboundToConvert<'a, MTL, MTR>
 where MTL: MantissaBackend,

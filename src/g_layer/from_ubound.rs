@@ -7,11 +7,11 @@ use crate::g_layer::gbounds::*;
 use std::mem::MaybeUninit;
 use gmp_mpfr_sys::mpfr;
 
-impl<MT1,MT2> Into<Gbound> for Ubound<MT1,MT2>
+impl<MT1,MT2> Into<GBound> for UBound<MT1,MT2>
 where MT1: MantissaBackend,
       MT2: MantissaBackend
 {
-    fn into(self) -> Gbound {    
+    fn into(self) -> GBound {    
     unsafe{
         // Handle the NaN cases first:
         if self.is_nan(){
@@ -20,7 +20,7 @@ where MT1: MantissaBackend,
             mpfr::init2(left.as_mut_ptr(), <MT1 as MantissaBackend>::precision() as i64);
             mpfr::init2(right.as_mut_ptr(), <MT2 as MantissaBackend>::precision() as i64);
     
-            return Gbound{
+            return GBound{
                 left  : left,
                 right : right,
                 open  : IntervalOpenness(LEFT_OPEN_MASK | RIGHT_OPEN_MASK)
@@ -42,7 +42,7 @@ where MT1: MantissaBackend,
                 left_right_open |= RIGHT_OPEN_MASK;
             }
 
-            return Gbound{
+            return GBound{
                 left :  left_endpoint.endpoint,
                 right: right_endpoint.endpoint,
                 open : IntervalOpenness(left_right_open)
