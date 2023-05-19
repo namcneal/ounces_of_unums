@@ -1,9 +1,9 @@
 use crate::u_layer::backend_reprs::MantissaBackend;
-use crate::u_layer::unums::*;
+use crate::u_layer::unsigned_float::*;
 use crate::u_layer::ubounds::*;
+
 use crate::g_layer::gbounds::*;
 use gmp_mpfr_sys::mpfr;
-use num_traits::Signed;
 use std::mem::MaybeUninit;
 
 
@@ -33,22 +33,21 @@ impl From<f64> for Ubound<int_left, int_right>{
     fn from(value: f64) -> Self {
         // Handle the NaN cases
         if value.is_nan(){
-            return Ubound{
-                left  : Unum::<int_left>::nan(),
-                right : Unum::<int_right>::nan()
-            }
+            return Ubound::<int_left, int_right>::nan();
+
         } else if value.is_infinite(){
+            let mut ubound = Ubound::<int_left, int_right>::nan();
+
             if value > 0.0{
-                return Ubound{
-                    left  : Unum::<int_left>::posinf(),
-                    right : Unum::<int_right>::posinf()
-                }
+                ubound.set_posinf(&Endpoint::Left);
+                ubound.set_posinf(&Endpoint::Right);
             } else{
-                return Ubound{
-                    left  : Unum::<int_left>::neginf(),
-                    right : Unum::<int_right>::neginf()
-                }
+                ubound.set_neginf(&Endpoint::Left);
+                ubound.set_neginf(&Endpoint::Right);
             }
+
+            return ubound;
+
         } else{
             unsafe{
                 let mut left_mpfr = MaybeUninit::uninit();

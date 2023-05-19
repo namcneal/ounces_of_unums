@@ -1,2 +1,2 @@
-pub (super) mod one_sided_bound;
+pub (super) mod non_nan_bounds;
 pub (crate) mod gbounds;

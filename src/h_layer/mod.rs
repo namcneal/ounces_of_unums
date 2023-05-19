@@ -1,1 +1,1 @@
-pub mod from_floats;
+pub mod from_f64;

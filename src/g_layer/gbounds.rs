@@ -1,9 +1,10 @@
 
 use crate::mpfr_glue::prelude::*;
 use crate::u_layer::backend_reprs::*;
-use crate::u_layer::unums::*;
+use crate::u_layer::unsigned_float::*;
+use crate::u_layer::utag::*;
 use crate::u_layer::ubounds::*;
-use crate::g_layer::one_sided_bound::*;
+use crate::g_layer::non_nan_bounds::*;
 
 
 use std::mem::MaybeUninit;
@@ -37,32 +38,37 @@ where MT1: MantissaBackend,
     fn into(self) -> Gbound {    
     unsafe{
         // Handle the NaN cases first:
-        if self.left.is_nan() || self.right.is_nan(){
+        if self.is_nan(){
+            let mut left  = MaybeUninit::uninit();
+            let mut right = MaybeUninit::uninit();
+            mpfr::init2(left.as_mut_ptr(), <MT1 as MantissaBackend>::precision() as i64);
+            mpfr::init2(right.as_mut_ptr(), <MT2 as MantissaBackend>::precision() as i64);
+    
             return Gbound{
-                left  : self.left.into(),
-                right : self.right.into(),
+                left  : left,
+                right : right,
                 open  : IntervalOpenness(LEFT_OPEN_MASK | RIGHT_OPEN_MASK)
             }
         } else{
-            let mut left_bound  : NonNaNBound = self.left.into();
-            let mut right_bound : NonNaNBound = self.right.into();
-            let mut left_right_open : LeftOpen_RightOpen = 0;
+            let mut left_endpoint  : NonNaNBound = UboundToConvert((&self, Endpoint::Left)).into();
+            let mut right_endpoint : NonNaNBound = UboundToConvert((&self, Endpoint::Right)).into();
 
             // Check to see whether the order is wrong
-            if mpfr::greater_p(left_bound.endpoint.as_ptr(), right_bound.endpoint.as_ptr()) > 0{
-                (left_bound, right_bound) = (right_bound, left_bound)
+            if mpfr::greater_p(left_endpoint.endpoint.as_ptr(), right_endpoint.endpoint.as_ptr()) > 0{
+                (left_endpoint, right_endpoint) = (right_endpoint, left_endpoint);
             }
 
-            if left_bound.open{
+            let mut left_right_open : LeftOpen_RightOpen = 0;
+            if left_endpoint.open{
                 left_right_open |= LEFT_OPEN_MASK;
-            }
-            if right_bound.open{
+            } 
+            if right_endpoint.open{
                 left_right_open |= RIGHT_OPEN_MASK;
             }
 
             return Gbound{
-                left : left_bound.endpoint,
-                right: right_bound.endpoint,
+                left :  left_endpoint.endpoint,
+                right: right_endpoint.endpoint,
                 open : IntervalOpenness(left_right_open)
             }
 
@@ -96,24 +102,45 @@ where MT1: MantissaBackend,
 impl From<&Gbound> for Ubound<int_left, int_right>
 {
     fn from(value: &Gbound) -> Self {
-        // Round the left-endpoint down and the right endpoint up
-        let mut unum_left  : Unum<int_left>  = MPFRForConversion(value.left,  mpfr::rnd_t::RNDD).into();
-        let mut unum_right : Unum<int_right> = MPFRForConversion(value.right, mpfr::rnd_t::RNDU).into();
+    unsafe{
+        // Handle the NaN cases
+        if mpfr::nan_p(value.left.as_ptr()) > 0 || mpfr::nan_p(value.right.as_ptr()) > 0{
+            return Ubound::<int_left, int_right>::nan();
+        }
+
+        let mut utag : u8 = 0;
+
+        let ubound_left : Option<UnsignedFloat<int_left>>;
+        if mpfr::inf_p(value.left.as_ptr()) > 0{
+            ubound_left = None;
+            utag  |= LEFT_INF_MASK;
+        } else{
+            ubound_left = Some( MPFRForConversion(value.left,  mpfr::rnd_t::RNDD).into() );
+        }
+
+        let ubound_right : Option<UnsignedFloat<int_right>>;
+        if mpfr::inf_p(value.right.as_ptr()) > 0{
+            ubound_right = None;
+            utag  |= RIGHT_INF_MASK;
+        } else{
+            ubound_right = Some( MPFRForConversion(value.right, mpfr::rnd_t::RNDU).into() );
+        }
 
         // The u-bits might already be set due to rounding above, but we still
         // need to handle the case that the conversion was exact, but the bounds were open
         if value.open.0 & LEFT_OPEN_MASK > 0{
-            unum_left.extra |= UNUM_UBIT_MASK;
+            utag |= LEFT_UBIT_MASK;
         }
         if value.open.0 & RIGHT_OPEN_MASK > 0{
-            unum_right.extra |= UNUM_UBIT_MASK;
+            utag |= RIGHT_UBIT_MASK;
         }
 
         Ubound { 
-            left  : unum_left, 
-            right : unum_right 
+            left  : ubound_left, 
+            right : ubound_right,
+            utag  : UTag(utag)
         }
-    }
+    }}
 }
 
 
