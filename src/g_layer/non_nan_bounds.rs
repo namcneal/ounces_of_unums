@@ -2,7 +2,7 @@ use std::mem::MaybeUninit;
 
 use crate::mpfr_glue::prelude::*;
 use crate::u_layer::ubounds::*;
-use crate::u_layer::{unsigned_float::*, backend_reprs::MantissaBackend};
+use crate::u_layer::backend_reprs::*;
 use gmp_mpfr_sys::mpfr;
 
 pub (super) struct NonNaNBound{

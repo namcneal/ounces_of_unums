@@ -8,7 +8,7 @@ use h_layer::from_f64::*;
 
 fn main() {
     unsafe {
-        let x : Ubound<u8,u8> = (-10.156).into();
+        let x : Ubound<u8,u32> = (100.5231231).into();
 
         println!("{}", x);
     
