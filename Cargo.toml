@@ -13,4 +13,5 @@ rug = "*"
  
 bitvec = "*"
 gmp-mpfr-sys = {version = "~1.5"}
-rig = "*"
+dashu  = "*"
+dashu-float = "*"

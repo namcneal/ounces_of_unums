@@ -3,7 +3,7 @@ use crate::u_layer::backend_reprs::*;
 use crate::u_layer::utag::*;
 use crate::u_layer::unsigned_float::*;
 
-#[derive(Copy, Clone)]
+#[derive(Debug,Copy, Clone)]
 pub (crate) struct Ubound<MTL,MTR>
 where MTL: MantissaBackend,
       MTR: MantissaBackend
@@ -146,7 +146,7 @@ where MTL: MantissaBackend,
             write!(f, "∞");
         } else{
             // NaN and Inf cases handled, so unwrapping is alright
-            write!(f, "{} ", self.left.unwrap());
+            write!(f, "{}, ", self.left.unwrap());
         }
 
         if self.utag.0 & RIGHT_SIGN_MASK > 0{
@@ -165,5 +165,7 @@ where MTL: MantissaBackend,
         } else{
             return write!(f, "]"); 
         }
+
+        todo!()
     }
 }

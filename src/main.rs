@@ -1,5 +1,3 @@
-#![feature(int_roundings)]
-#![feature(generic_arg_infer)]
 mod mpfr_glue;
 mod u_layer;
 mod g_layer;
@@ -10,9 +8,9 @@ use h_layer::from_f64::*;
 
 fn main() {
     unsafe {
-        let x : Ubound<u8,u8> = 0.1.into();
+        let x : Ubound<u8,u8> = (-10.156).into();
 
-        println!("{}", &x);
+        println!("{}", x);
     
     }
 }

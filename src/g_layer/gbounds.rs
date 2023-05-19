@@ -101,38 +101,55 @@ where MT1: MantissaBackend,
 )]
 impl From<&Gbound> for Ubound<int_left, int_right>
 {
-    fn from(value: &Gbound) -> Self {
+    fn from(gbound: &Gbound) -> Self {
     unsafe{
         // Handle the NaN cases
-        if mpfr::nan_p(value.left.as_ptr()) > 0 || mpfr::nan_p(value.right.as_ptr()) > 0{
+        if mpfr::nan_p(gbound.left.as_ptr()) > 0 || mpfr::nan_p(gbound.right.as_ptr()) > 0{
             return Ubound::<int_left, int_right>::nan();
         }
 
         let mut utag : u8 = 0;
 
         let ubound_left : Option<UnsignedFloat<int_left>>;
-        if mpfr::inf_p(value.left.as_ptr()) > 0{
+        if mpfr::inf_p(gbound.left.as_ptr()) > 0{
             ubound_left = None;
             utag  |= LEFT_INF_MASK;
         } else{
-            ubound_left = Some( MPFRForConversion(value.left,  mpfr::rnd_t::RNDD).into() );
+            let converted : ConvertedMPFR<int_left> = MPFRForConversion(gbound.left,  mpfr::rnd_t::RNDD).into();
+            ubound_left = Some( converted.0 );
+            if converted.1{
+                utag |= LEFT_UBIT_MASK;
+            }
         }
 
         let ubound_right : Option<UnsignedFloat<int_right>>;
-        if mpfr::inf_p(value.right.as_ptr()) > 0{
+        if mpfr::inf_p(gbound.right.as_ptr()) > 0{
             ubound_right = None;
             utag  |= RIGHT_INF_MASK;
         } else{
-            ubound_right = Some( MPFRForConversion(value.right, mpfr::rnd_t::RNDU).into() );
+            let converted : ConvertedMPFR<int_right> = MPFRForConversion(gbound.right,  mpfr::rnd_t::RNDU).into();
+            ubound_right = Some( converted.0 );
+            if converted.1{
+                utag |= RIGHT_UBIT_MASK;
+            }
         }
 
         // The u-bits might already be set due to rounding above, but we still
         // need to handle the case that the conversion was exact, but the bounds were open
-        if value.open.0 & LEFT_OPEN_MASK > 0{
+        if gbound.open.0 & LEFT_OPEN_MASK > 0{
             utag |= LEFT_UBIT_MASK;
         }
-        if value.open.0 & RIGHT_OPEN_MASK > 0{
+        if gbound.open.0 & RIGHT_OPEN_MASK > 0{
             utag |= RIGHT_UBIT_MASK;
+        }
+
+        if mpfr::sgn(gbound.left.as_ptr()) < 0{
+            utag |= LEFT_SIGN_MASK;
+        }
+
+
+        if mpfr::sgn(gbound.right.as_ptr()) < 0{
+            utag |= RIGHT_SIGN_MASK;
         }
 
         Ubound { 

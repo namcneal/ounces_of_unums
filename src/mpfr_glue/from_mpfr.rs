@@ -21,8 +21,8 @@ pub (crate) struct ConvertedMPFR<MT: MantissaBackend>(pub (crate) UnsignedFloat<
     [ u32 ];
     [ u64 ];
 )]
-impl From<MPFRForConversion> for UnsignedFloat<mantissa_type>{
-    fn from(_value: MPFRForConversion) -> UnsignedFloat<mantissa_type> {     
+impl From<MPFRForConversion> for ConvertedMPFR<mantissa_type>{
+    fn from(_value: MPFRForConversion) -> Self {     
         let value = _value.0;
         let rounding_direction = _value.1;   
         let mut rounded_during_conversion = false;
@@ -38,19 +38,21 @@ impl From<MPFRForConversion> for UnsignedFloat<mantissa_type>{
             }
 
             let left_padded_mantissa : MPFRLimbBackend = *rounded_mpfr.assume_init().d.as_ptr().as_ref().unwrap();
-            println!("MPFR mantissa with left-padding {:b}", left_padded_mantissa);
+            // println!("MPFR mantissa with left-padding {:b}", left_padded_mantissa);
             
             let mantissa : mantissa_type = (left_padded_mantissa >> (MPFR_BITS_PER_LIMB - target_precision)) as mantissa_type;
-            println!("Mantissa with the precision we need {:b}", mantissa);
+            // println!("Mantissa with the precision we need {:b}", mantissa);
 
             let exponent = mpfr::get_exp(rounded_mpfr.as_ptr()) - mpfr_exponent_offset_from_zero(target_precision as i64);
-            println!("Exponent: {:?}", mpfr_exponent_offset_from_zero(target_precision as i64));
+            // println!("Exponent offset: {:?}", mpfr_exponent_offset_from_zero(target_precision as i64));
             mpfr::clear(rounded_mpfr.as_mut_ptr());
 
-            return UnsignedFloat::<mantissa_type>{
+            let unsigned_float = UnsignedFloat::<mantissa_type>{
                 mantissa : mantissa,
                 exponent : exponent 
-            }
+            };
+
+            ConvertedMPFR::<mantissa_type>(unsigned_float, rounded_during_conversion)
         }
     }
 }
