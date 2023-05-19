@@ -60,6 +60,12 @@ where MT: MantissaBackend
         }
     }
 
+    pub fn smallest() -> UnsignedFloat<MT>{
+        UnsignedFloat { 
+            mantissa: MT::one() << <MT as MantissaBackend>::precision() - 1, 
+            exponent: DefaultExponentBackend::MIN }
+    }
+
     pub fn precision(&self) -> usize {
         <MT as MantissaBackend>::precision()
     }
@@ -117,10 +123,10 @@ fn binary_to_decimal(binary_string: &str) -> Result<String, ()> {
             let digit = c.to_digit(2).unwrap() as usize;
             
 
-            let numerator = dashu::integer::IBig::from_usize(digit).unwrap();
-            let denominator = dashu::integer::UBig::from_usize(2_usize.pow(i as u32 +1)).unwrap();
+            let numerator   = dashu::integer::IBig::from_usize(digit).unwrap();
+            let power_of_two= dashu::integer::UBig::from_usize(2).unwrap().pow(i + 1);
 
-            acc + dashu::rational::RBig::from_parts(numerator, denominator)
+            acc + dashu::rational::RBig::from_parts(numerator, power_of_two)
         });
 
     // Combine the integer and fractional parts and format the result
@@ -154,7 +160,8 @@ where MT: MantissaBackend,
         } else{
             let mantissa_str = format!("{:b}", self.mantissa);
 
-            let zeros_after_decimal = (-self.exponent - 1) as usize;
+
+            let zeros_after_decimal = -(self.exponent + 1) as usize;
             let padding : String = vec![0; zeros_after_decimal]
                 .into_iter()
                 .map(|i| i.to_string())
