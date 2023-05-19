@@ -12,7 +12,7 @@ fn main() {
     unsafe {
         let x : Ubound<u8,u8> = 0.1.into();
 
-        println!("{:?}", &x);
+        println!("{}", &x);
     
     }
 }

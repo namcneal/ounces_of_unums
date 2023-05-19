@@ -3,6 +3,7 @@ use bitvec::prelude::*;
 use num_traits::Zero;
 use gmp_mpfr_sys::mpfr;
 use std::mem::MaybeUninit;
+use std::fmt;
 
 //   Structure of the Universal Numbers implemented here:
 //
@@ -12,7 +13,13 @@ use std::mem::MaybeUninit;
 // SNUI -> ubit, NaN, and infinite convenience bits
 
 
-type Sign_UBit_NaN_Inf_Type = u8;
+pub enum UnsignedFloatSizes{
+    XS,
+    S,
+    M,
+    L,
+    XL
+}
 
 #[derive(Debug, Copy, Clone)]
 pub struct UnsignedFloat<MT: MantissaBackend>
@@ -61,10 +68,30 @@ where MT: MantissaBackend
     pub (crate) fn mpfr_exponent(&self) -> gmp_mpfr_sys::mpfr::exp_t{
         self.exponent
     }
-
-
-
 }
+
+use std::ffi::c_long;
+
+impl<MT> std::fmt::Display for UnsignedFloat<MT>
+where MT: MantissaBackend,
+{       
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Convert the mantissa to a binary string representation
+        let mantissa_str = format!("{:b}", self.mantissa);
+
+        // Determine the number of digits before the decimal point
+        let num_digits = if self.exponent >= 0 {
+            self.exponent as usize + 1
+        } else {
+            1
+        };
+
+        todo!()
+    }
+}
+
+
+
 
 
 

@@ -3,7 +3,7 @@ use crate::u_layer::backend_reprs::*;
 use crate::u_layer::utag::*;
 use crate::u_layer::unsigned_float::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub (crate) struct Ubound<MTL,MTR>
 where MTL: MantissaBackend,
       MTR: MantissaBackend
@@ -123,5 +123,47 @@ where MTL: MantissaBackend,
     }
 }
 
+impl<MTL,MTR> std::fmt::Display for Ubound<MTL,MTR>
+where MTL: MantissaBackend,
+      MTR: MantissaBackend
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_nan(){
+            return write!(f, "NaN");    
+        }
 
+        if self.utag.0 & LEFT_UBIT_MASK > 0{
+            write!(f, "("); 
+        } else{
+            write!(f, "["); 
+        }
 
+        if self.utag.0 & LEFT_SIGN_MASK > 0{
+            write!(f, "-");
+        }
+
+        if self.is_inf(&Endpoint::Left){
+            write!(f, "∞");
+        } else{
+            // NaN and Inf cases handled, so unwrapping is alright
+            write!(f, "{} ", self.left.unwrap());
+        }
+
+        if self.utag.0 & RIGHT_SIGN_MASK > 0{
+            write!(f, "-");
+        }
+
+        if self.is_inf(&Endpoint::Right){
+            write!(f, "∞");
+        } else{
+            // NaN and Inf cases handled, so unwrapping is alright
+            write!(f, "{}", self.right.unwrap());
+        }
+
+        if self.utag.0 & RIGHT_UBIT_MASK > 0{
+            return write!(f, ")"); 
+        } else{
+            return write!(f, "]"); 
+        }
+    }
+}

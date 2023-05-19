@@ -5,7 +5,8 @@ use num_traits::Zero;
 pub trait MantissaBackend : std::ops::Shr<usize> + 
                             num_traits::PrimInt  + 
                             TryInto<u64>         +
-                            std::fmt::Debug
+                            std::fmt::Debug      + 
+                            std::fmt::Binary
 {
     fn precision() -> usize;
 }

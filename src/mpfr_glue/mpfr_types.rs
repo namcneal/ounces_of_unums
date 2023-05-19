@@ -6,7 +6,7 @@ use gmp_mpfr_sys::mpfr;
 
 pub (crate) type MPFRBitOrder         = bitvec::prelude::Msb0;
 pub (crate) type MPFRPrecisionBackend = gmp_mpfr_sys::mpfr::prec_t;
-pub (crate) type MPFRExponentBackend  = core::ffi::c_long;
+pub (crate) type MPFRExponentBackend  = std::ffi::c_long;
 pub (crate) type MPFRLimbBackend      = gmp_mpfr_sys::gmp::limb_t;
 
 // conversion to the precision type to save us from doing this later
