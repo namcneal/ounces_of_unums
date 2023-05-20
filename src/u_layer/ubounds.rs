@@ -48,6 +48,10 @@ where MTL: MantissaBackend,
         }
     }
 
+    pub fn is_negative(&self, endpoint:&Endpoint) -> bool{
+        !self.is_positive(endpoint)
+    }
+
     pub fn is_most_positive_or_negative(&self, endpoint:&Endpoint) -> bool{
         match endpoint{
             Left  => match self.left{

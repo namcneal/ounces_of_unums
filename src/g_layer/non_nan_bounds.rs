@@ -3,6 +3,7 @@ use std::mem::MaybeUninit;
 use crate::mpfr_glue::prelude::*;
 use crate::u_layer::ubounds::*;
 use crate::u_layer::backend_reprs::*;
+use crate::u_layer::utag::LEFT_UBIT_MASK;
 use gmp_mpfr_sys::mpfr;
 
 pub (super) struct NonNaNBound{
@@ -35,10 +36,25 @@ where MTL: MantissaBackend,
             else if ubound.is_inexact(left_or_right_endpoint){
                 open = true;
 
-                // If we are at the most positive or negative number and inexact, the bound should be infinite
+                // If we are at the most positive or negative number and inexact, the returned endpoint might need to be an infinity
+                // This happens  if the ubound's left  unum represents (-Inf, most negative) since we take the LHS
+                // And will also if the ubound's right unum represnts  (most positive, Inf)
                 if ubound.is_most_positive_or_negative(left_or_right_endpoint){
-                    mpfr::init2(mpfr_float.as_mut_ptr(), ubound.precision(left_or_right_endpoint) as i64);
-                    mpfr::set_inf(mpfr_float.as_mut_ptr(), ubound.mpfr_sign(left_or_right_endpoint))
+                    match left_or_right_endpoint{
+
+                        // If the left unum's exact value is the most negative number, we get negative infinity for the bound
+                        Endpoint::Left => if ubound.is_negative(&Endpoint::Left){
+                            mpfr::init2(mpfr_float.as_mut_ptr(), ubound.precision(left_or_right_endpoint) as i64);
+                            mpfr::set_inf(mpfr_float.as_mut_ptr(), ubound.mpfr_sign(left_or_right_endpoint)); // sign is negative
+                        },
+
+                        // If the right unum's exact value is the most positive number we get positive infinity for the bound
+                        Endpoint::Right => {
+                            mpfr::init2(mpfr_float.as_mut_ptr(), ubound.precision(left_or_right_endpoint) as i64);
+                            mpfr::set_inf(mpfr_float.as_mut_ptr(), ubound.mpfr_sign(left_or_right_endpoint)); // sign is positive
+                        }
+                    }
+
                 } 
 
                 // Otherwise, we need to handle the cases where we've added a ULP.
