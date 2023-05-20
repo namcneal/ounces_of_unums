@@ -40,7 +40,7 @@ where MT: MantissaBackend
         new_unum
     }
 
-        // Zero is represented by anything with a zero mantissa.
+    // Zero is represented by anything with a zero mantissa.
     // No canonical choice, but I try to implement a zero exponent
     pub fn zero() -> UnsignedFloat<MT>{
         UnsignedFloat { 
