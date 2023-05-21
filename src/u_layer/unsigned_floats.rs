@@ -137,7 +137,7 @@ fn binary_to_decimal(binary_string: &str) -> Result<String, ()> {
 }
 
 
-impl<MT> std::fmt::Display for UFloat<MT>
+impl<MT> std::fmt::Display for UnsignedFloat<MT>
 where MT: MantissaBackend,
 {       
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
