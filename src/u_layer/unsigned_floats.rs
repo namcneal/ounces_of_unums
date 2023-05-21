@@ -31,10 +31,12 @@ pub struct UnsignedFloat<MT: MantissaBackend>
     pub exponent : DefaultExponentBackend,
 }
 
+pub type UFloat<MT> = UnsignedFloat<MT>;
+
 impl<MT> UnsignedFloat<MT>
 where MT: MantissaBackend
 {
-    pub fn plus_one_ulp(&self) -> UnsignedFloat<MT>{
+    pub fn plus_one_ulp(&self) -> UFloat<MT>{
         let mut new_unum = self.clone();
         new_unum.mantissa = self.mantissa + MT::one();
         new_unum
@@ -42,7 +44,7 @@ where MT: MantissaBackend
 
     // Zero is represented by anything with a zero mantissa.
     // No canonical choice, but I try to implement a zero exponent
-    pub fn zero() -> UnsignedFloat<MT>{
+    pub fn zero() -> UFloat<MT>{
         UnsignedFloat { 
             mantissa: MT::zero(), 
             exponent: DefaultExponentBackend::zero(), 
@@ -53,14 +55,14 @@ where MT: MantissaBackend
         self.mantissa == MT::zero()
     }
 
-    pub fn largest() -> UnsignedFloat<MT>{
+    pub fn largest() -> UFloat<MT>{
         UnsignedFloat { 
             mantissa: MT::max_value(), 
             exponent: DefaultExponentBackend::MAX, 
         }
     }
 
-    pub fn smallest() -> UnsignedFloat<MT>{
+    pub fn smallest() -> UFloat<MT>{
         UnsignedFloat { 
             mantissa: MT::one() << <MT as MantissaBackend>::precision() - 1, 
             exponent: DefaultExponentBackend::MIN }
@@ -79,7 +81,7 @@ where MT: MantissaBackend
     }
 }
 
-impl<MT: MantissaBackend> Into<String> for &UnsignedFloat<MT>{
+impl<MT: MantissaBackend> Into<String> for &UFloat<MT>{
     fn into(self) -> String {
         // Convert the mantissa to a binary string representation
         let mut mantissa_str = format!("{:b}", self.mantissa);
@@ -135,7 +137,7 @@ fn binary_to_decimal(binary_string: &str) -> Result<String, ()> {
 }
 
 
-impl<MT> std::fmt::Display for UnsignedFloat<MT>
+impl<MT> std::fmt::Display for UFloat<MT>
 where MT: MantissaBackend,
 {       
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

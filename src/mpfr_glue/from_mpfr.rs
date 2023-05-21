@@ -1,6 +1,6 @@
 use crate::mpfr_glue::mpfr_types::*;
 use crate::u_layer::backend_reprs::*;
-use crate::u_layer::unsigned_float::*;
+use crate::u_layer::unsigned_floats::*;
 use crate::u_layer::ubounds::*;
 use crate::g_layer::gbounds::*;
 

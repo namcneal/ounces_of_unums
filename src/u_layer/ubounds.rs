@@ -1,7 +1,7 @@
 
 use crate::u_layer::backend_reprs::*;
 use crate::u_layer::utag::*;
-use crate::u_layer::unsigned_float::*;
+use crate::u_layer::unsigned_floats::*;
 
 #[derive(Debug,Copy, Clone)]
 pub (crate) struct UBound<MTL,MTR>
